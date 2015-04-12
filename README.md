@@ -7,20 +7,20 @@ Sometimes you need a simple way for processes to hand off simple
 information or flags between cooperating processes
 
 * Is daily system housekeeping running, or complete?
-** Monitoring tools can look for timestamp flag files and alert
-   if something failed, or has taken too long
+  * Monitoring tools can look for timestamp flag files and alert
+    if something failed, or has taken too long
 * Is a process or task allowed to run?  Or has someone or something
   set a flag to indicate that it should not be run?
-** We use a timestamp file to say whether or not puppet is allowed to run
-** We use timestamp files to indicate that database replication should
-   be stopped (during maintenance), and implement a simple "lockout/tagout"
-   system so that multiple people can turn off replication, and it won't
-   be turned back on until the last person agrees.
+  * We use a timestamp file to say whether or not puppet is allowed to run
+  * We use timestamp files to indicate that database replication should
+    be stopped (during maintenance), and implement a simple "lockout/tagout"
+    system so that multiple people can turn off replication, and it won't
+    be turned back on until the last person agrees.
 * Has a periodic task completed correctly recently?
-** A cron job can update a timestamp file when it completes, a
-   monitoring system can alert if the task hasn't completed
-   successfully within a reaonable time period.  e.g. Some number
-   of failures are acceptable, but consistent failures are not.
+  * A cron job can update a timestamp file when it completes, a
+    monitoring system can alert if the task hasn't completed
+    successfully within a reaonable time period.  e.g. Some number
+    of failures are acceptable, but consistent failures are not.
 
 
 ## How It Works
