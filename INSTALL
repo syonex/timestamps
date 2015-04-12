@@ -1,0 +1,8 @@
+Installation
+
+You should be able to
+    make install
+or if you're package inclined, and have fpm https://github.com/jordansissel/fpm
+    make rpm
+or
+    make deb

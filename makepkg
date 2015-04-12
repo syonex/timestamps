@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# creates a package into /tmp (perhaps not optimal)
+
+# needs one argument - rpm or deb
+# expects the fpm (Effing Package Management) command
+
+# simple minded script
+# which make not actually correctly create a deb package
+
+PATH="/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/sbin:/usr/sbin"
+export PATH
+umask 022
+
+# die if anything goes wrong
+set -e
+
+. VERSION
+
+myname=`basename "$0"`
+tmp1="/tmp/$myname.1.$$"
+rm -rf "$tmp1"
+trap "rm -rf '$tmp1'" EXIT
+
+if [ "$1" != "rpm" -a "$1" != "deb" ]; then
+    echo 1>&2 "$myname: need one arg, rpm or deb"
+    exit 1
+fi
+
+mkdir "$tmp1"
+
+make "DESTDIR=${tmp1}/usr" install
+
+cd /tmp
+
+fpm -t "$1" -n "$NAME" -v "$VERSION" --iteration "$PKGRELEASE" \
+    --url "$URL" \
+    --architecture all \
+    -s dir -C "$tmp1" .
+
+# we checked that $1 is rpm or deb
+ls -l *.$1
+
+exit 0

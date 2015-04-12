@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# This can be run daily to exercise the /tmp/timestamps
+# directory, so the tmp cleaner won't remove it and cause
+# puppet (or whatever) to recrete it and tell us about it.
+
+PATH=/usr/local/bin:/usr/bin
+export PATH
+
+timestamp timestamp_daily_exercise_$$
+timestamp -R timestamp_daily_exercise_$$
+
+exit 0

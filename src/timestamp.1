@@ -1,0 +1,105 @@
+.TH TIMESTAMP 1
+.SH NAME
+timestamp \- create timestamp files for tracking state or progress
+.SH SYNOPSIS
+.B timestamp
+.RI [ -c ]
+.RI [ -d
+.IR directory ]
+.RI [ -f ]
+.RI [ -l ]
+.RI [ -r ]
+.RI [ -R ]
+.RI [ -u
+.IR user ]
+.I timestampname
+.RI [ message
+.IR ... ]
+.SH DESCRIPTION
+.B timestamp
+creates files in
+.I /tmp/timestamps_username
+so other things can check that things are working.
+.TP
+.B -c
+Print the contents of the timestamp file.
+Requires a
+.I timestampname
+argument.
+.TP
+.B -d directory
+Use
+.I directory
+instead of
+.IR /tmp/timestamps_username .
+The
+.I directory
+must already exist, and is assumed to be writeable.
+.TP
+.B -f
+List all (any) existing timestamp files for this user/directory.
+Gives a full pathname, including the directory, so you can go fiddle
+or check the files if you wish.
+If
+.I -f
+is given, any
+.I timestampname
+restricts output to only that timestamp, and any
+.I message
+arguments are silently ignored.
+.TP
+.B -l
+List all (any) existing timestampnames for this user/directory.
+.TP
+.B -r
+Remove the timestamp file.
+Requires a
+.I timestampname
+argument.
+.TP
+.B -R
+Like
+.I -r
+but does not complain if the timestamp does not exist.
+.TP
+.B -u user
+Pretend that you are
+.I user
+instead of yourself.
+Note that
+.I user
+does not have to actually be a real user.
+.PP
+The
+.IR -c ,
+.IR -f ,
+.IR -l ,
+and
+.I -r
+options are mutually exclusive.
+.SH EXAMPLES
+Check if a timestamp already exists
+.nf
+  timestamp -c name > /dev/null
+  if [ $? -eq 0 ]; then
+    echo timestamp name for $USER already exists
+  else
+    echo timestamp name for $USER does NOT already exist
+  fi
+.fi
+.SH AUTHOR
+John Sellens, SYONEX
+.SH CODE
+https://github.com/syonex/timestamps
+.SH BUGS
+If you're root, the directory is
+.IR /tmp/timestamps .
+If you use
+.IR "-u root" ,
+the directory is
+.IR /tmp/timestamps_root .
+.PP
+May behave poorly if someone manually creates a subdirectory in
+a timestamp directory.
+.PP
+This man page could be improved.

@@ -1,0 +1,175 @@
+#!/bin/sh
+
+# Create a timestamp file, presumably for something else to check for
+
+PATH=/usr/local/bin:/bin:/usr/bin
+export PATH
+
+# explicitly readable - if you want them unreadable, change
+# the mode on your timestamp directory
+umask 022
+
+myname=`basename "$0"`
+
+error() {
+    echo 1>&2 "$myname:" "$@"
+    exit 1
+}
+usage() {
+    echo 1>&2 "$myname:" "$@"
+    echo 1>&2 "${myname}: Usage: ${myname} [-c] [-d directory] [-f] [-l] [-r] [-R] [-u user] [--] timestampname [message ...]"
+    exit 1
+}
+
+# checkvalid type thing
+checkvalid() {
+    case "$2" in
+	*/*)
+	    usage $1 name may not include / characters
+	    ;;
+	"")
+	    usage $1 name may not be empty
+	    ;;
+    esac
+}
+
+name=`id -un`
+if [ "$name" = "root" ]; then
+    # special case root - this may be stupid
+    name=""
+else
+    name="_$name"
+fi
+tdir="/tmp/timestamps$name"
+
+contents="0"
+filelist="0"
+missingok="0"
+rmstamp="0"
+stamplist="0"
+while [ $# -ge 1 ]; do
+    case "$1" in
+	-c)
+	    contents="1"
+	    ;;
+	-d)
+	    shift
+	    if [ -z "$1" ]; then
+		usage -d requires a non-null directory value
+	    fi
+	    if [ ! -d "$1" ]; then
+		usage -d directory "'$1'" must already exist
+	    fi
+	    tdir="$1"
+	    ;;
+	-f)
+	    filelist="1"
+	    ;;
+	-l)
+	    stamplist="1"
+	    ;;
+	-r)
+	    rmstamp="1"
+	    missingok="0"
+	    ;;
+	-R)
+	    rmstamp="1"
+	    missingok="1"
+	    ;;
+	-u)
+	    shift
+	    checkvalid user "$1"
+	    tdir="/tmp/timestamps_$1"
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    usage unknown option "$1"
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+    shift
+done
+
+if [ `expr $contents + $filelist + $rmstamp + $stamplist` -gt 1 ]; then
+    usage at most one of -c -f -l and -r is allowed
+fi
+
+if [ $# -ge 1 ]; then
+    checkvalid timestamp "$1"
+    tname="$1"
+    shift
+fi
+tfile="$tdir/$tname"
+
+if [ $filelist -eq 1 -o $stamplist -eq 1 ]; then
+    if [ $# -gt 0 ]; then
+	usage "no message argument(s) allowed with -f or -l"
+    fi
+    replace=""
+    if [ $filelist -eq 1 ]; then
+	replace="&"
+    fi
+    pattern="."
+    if [ ! -z "$tname" ]; then
+	pattern="/$tname\$"
+    fi
+    if [ -d "$tdir" ]; then
+	find "$tdir" -type f \
+	| egrep "$pattern" \
+	| sed -e "s,.*/,$replace,"
+    fi
+    exit 0
+fi
+
+if [ -z "$tname" ]; then
+    usage need at least one argument - the timestampname
+fi
+
+if [ $contents -eq 1 -o $rmstamp -eq 1 ]; then
+    if [ $# -gt 0 ]; then
+	usage "no message argument(s) allowed with -c or -r"
+    fi
+    if [ ! -f "$tfile" ]; then
+	if [ $missingok -eq 1 ]; then
+	    exit 0
+	fi
+	error given timestamp "$tname" does not exist
+    fi
+    if [ $contents -eq 1 ]; then
+	# Try and force an atime update in case someone is silly and
+	# mounted /tmp with noatime.  The -c flag says do not create
+	# and do not complain. Ah - seems in newer (centos 6?) versions,
+	# touch -c will complain, so let's toss the output
+	touch -a -c "$tfile" >/dev/null 2>&1
+	cat "$tfile"
+	if [ $? -ne 0 ]; then
+	    error could not cat contents of timestamp "$tfile"
+	fi
+    elif [ $rmstamp -eq 1 ]; then
+	rm "$tfile"
+	if [ $? -ne 0 ]; then
+	    error could not remove timestamp "$tfile"
+	fi
+    else
+	error internal error - should not get here
+    fi
+    exit 0
+fi
+
+# ok - get to work and make a timestamp file
+mkdir -p "$tdir"
+
+# we could put arbitrarily more stuff in here of course
+cat <<EOF > "$tfile"
+datestamp: `date +%Y%m%d_%H%M%S`
+ctime: `date +%s`
+time: `date +%H%M%S`
+EOF
+echo "message:" "$@" >> "$tfile"
+
+exit $?

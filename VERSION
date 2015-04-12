@@ -1,0 +1,5 @@
+# this is sourced by makepkg, and you can use it as a simple reference
+NAME=timestamps
+VERSION=1
+PKGRELEASE=`date +%Y%m%d`
+URL="https://github.com/syonex/timestamps"
